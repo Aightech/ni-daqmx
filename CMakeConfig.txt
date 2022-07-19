@@ -4,8 +4,8 @@ set(PROJECT_VERSION 2.2)
 ###### Special libraries ######
 set(EXTRA_LIBS "")
 set(TOOL_LIBS "")		
-if(0)
-  set(EXTRA_LIBS "pthread" "util")
+if(1)
+  set(EXTRA_LIBS "/usr/lib/x86_64-linux-gnu/libnidaqmx.so")
 endif()
 
 ###### Boost libraries ######
