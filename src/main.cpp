@@ -4,6 +4,7 @@
 int main(void)
 {
     NI::ATI::FT6_sensor sensor;
+	sensor.start_thread();
 
     int nb_channels = 6;
     lsl::stream_info info_sample("pressure", "sample", nb_channels, 0,

@@ -52,7 +52,7 @@ void DAQcard::check_error(int error)
 namespace ATI
 {
 
-FT6_sensor::FT6_sensor() : m_card(6)
+void FT6_sensor::start_thread()
 {
     m_active = true;
     m_thread = new std::thread(&FT6_sensor::loop, this);
@@ -64,6 +64,8 @@ FT6_sensor::~FT6_sensor()
     m_thread->join();
     delete m_thread;
 };
+
+void FT6_sensor::pause_thread() { m_active = false; };
 
 double FT6_sensor::get_FT(unsigned i) //Tz,Ty,Tx,Fz,Fy,Fx
 {
@@ -85,7 +87,6 @@ void FT6_sensor::read_FT()
     m_card.read(m_data);
     std::lock_guard<std::mutex> lck(*m_mutex);
     this->convert();
-    
 };
 
 void FT6_sensor::convert()

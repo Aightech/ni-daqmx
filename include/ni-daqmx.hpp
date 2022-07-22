@@ -61,9 +61,11 @@ namespace ATI
 class FT6_sensor
 {
     public:
-    FT6_sensor();
-
+    FT6_sensor() : m_card(6){};
     ~FT6_sensor();
+
+    void start_thread();
+    void pause_thread();
 
     /**
      * @brief Returns the force or torque sensor data
@@ -96,8 +98,13 @@ class FT6_sensor
 
     static void *loop(void *obj);
 
-    private:
+    /**
+     * @brief Reads the NI::DAQcard and updates the data. Needs to be called manually if the thread is not active.
+     * 
+     */
     void read_FT();
+
+    private:
 
     void convert();
 
