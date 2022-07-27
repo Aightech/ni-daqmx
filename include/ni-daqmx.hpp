@@ -61,7 +61,7 @@ namespace ATI
 class FT6_sensor
 {
     public:
-    FT6_sensor() : m_card(6){};
+    FT6_sensor() : m_card(6){ m_mutex = new std::mutex();};
     ~FT6_sensor();
 
     void start_thread();
@@ -108,7 +108,7 @@ class FT6_sensor
 
     void convert();
 
-    std::thread *m_thread;
+    std::thread *m_thread=nullptr;
     std::mutex *m_mutex;
     bool m_active = false;
 

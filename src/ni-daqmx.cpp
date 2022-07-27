@@ -61,8 +61,12 @@ void FT6_sensor::start_thread()
 FT6_sensor::~FT6_sensor()
 {
     m_active = false;
-    m_thread->join();
-    delete m_thread;
+    if(m_thread!=nullptr)
+    {
+        m_thread->join();
+        delete m_thread;
+        delete m_mutex;
+    }
 };
 
 void FT6_sensor::pause_thread() { m_active = false; };
