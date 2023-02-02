@@ -5,7 +5,7 @@ set(PROJECT_VERSION 2.2)
 set(EXTRA_LIBS "")
 set(TOOL_LIBS "")		
 if(1)
-  set(EXTRA_LIBS "/usr/lib/x86_64-linux-gnu/libnidaqmx.so" "pthread")
+  set(EXTRA_LIBS "/usr/lib/x86_64-linux-gnu/libnidaqmx.so" "pthread" )
 endif()
 
 ###### Boost libraries ######
