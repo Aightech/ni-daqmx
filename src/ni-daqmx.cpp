@@ -4,7 +4,7 @@
 namespace NI
 {
 
-DAQcard::DAQcard(int n) : m_n(n)
+  DAQcard::DAQcard(int n, int verbose) : m_n(n), ESC::CLI(verbose, "NI_DAQ")
 {
     std::string task_name = "Task";
     std::string ch_path = "Dev1/ai";
@@ -42,9 +42,8 @@ void DAQcard::check_error(int error)
             DAQmxClearTask(m_taskHandle);
         }
         if(DAQmxFailed(error))
-            printf("DAQmx Error: %s\n", m_errBuff);
-        printf("End of program, press Enter key to quit\n");
-        getchar();
+	  logln(ESC::fstr("Error",{ESC::FG_RED}) + ESC::fstr(m_errBuff,{ESC::BOLD}), true);
+        logln("End of program, press Enter key to quit\n");
         exit(0);
     }
 }
