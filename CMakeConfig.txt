@@ -1,11 +1,11 @@
 set(EXEC_NAME ni-daqmx)
-set(PROJECT_VERSION 2.2)
+set(PROJECT_VERSION 1.8)
 
 ###### Special libraries ######
 set(EXTRA_LIBS "")
 set(TOOL_LIBS "")		
 if(1)
-  set(EXTRA_LIBS "/usr/lib/x86_64-linux-gnu/libnidaqmx.so" "pthread" )
+  set(EXTRA_LIBS "/usr/lib/x86_64-linux-gnu/libnidaqmx.so" "/usr/lib/x86_64-linux-gnu/libnipalu.so" "pthread")
 endif()
 
 ###### Boost libraries ######
