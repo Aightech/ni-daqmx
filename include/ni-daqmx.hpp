@@ -12,6 +12,8 @@
 #include <mutex>
 #include <thread>
 
+#include "strANSIseq.hpp"
+
 // nidaqmxconfig --self-test
 // nidaqmxconfig --self-test /dev/nipalk
 // g++ main.cpp /usr/lib/x86_64-linux-gnu/libnidaqmx.so
@@ -27,14 +29,14 @@ namespace NI
  *
  * @author Alexis Devillard
  */
-class DAQcard
+  class DAQcard: virtual public ESC::CLI
 {
     public:
     /**
      * @brief Construct a new DAQcard object
      * @param n The number of channels to read on the card.
      */
-    DAQcard(int n);
+  DAQcard(int n, int verbose = -1);
     ~DAQcard();
     void read(float64 *data);
 
@@ -58,10 +60,10 @@ namespace ATI
  *
  * @author Alexis Devillard
  */
-class FT6_sensor
+  class FT6_sensor : virtual public ESC::CLI
 {
     public:
-    FT6_sensor() : m_card(6){ m_mutex = new std::mutex();};
+  FT6_sensor(int verbose=-1) : m_card(6), ESC::CLI(verbose, "FT6_sensor"){ m_mutex = new std::mutex();};
     ~FT6_sensor();
 
     void start_thread();
