@@ -29,16 +29,19 @@ namespace NI
  *
  * @author Alexis Devillard
  */
-  class DAQcard: virtual public ESC::CLI
+class DAQcard : virtual public ESC::CLI
 {
     public:
     /**
      * @brief Construct a new DAQcard object
      * @param n The number of channels to read on the card.
      */
-  DAQcard(int n, int verbose = -1);
+    DAQcard(int n, int verbose = -1);
     ~DAQcard();
-    void read(float64 *data);
+    void read(float64 *data,
+              int *timestamp_sec = nullptr,
+              int *timestamp_nsec = nullptr);
+    void set_samplingSize(int nb_samples) { m_samplingSize = nb_samples; }
 
     private:
     void check_error(int error);
@@ -48,6 +51,7 @@ namespace NI
     int32 m_nb_read;
     char m_errBuff[2048] = {'\0'};
     int m_n;
+    int m_samplingSize = 1;
 };
 
 namespace ATI
@@ -60,10 +64,14 @@ namespace ATI
  *
  * @author Alexis Devillard
  */
-  class FT6_sensor : virtual public ESC::CLI
+class FT6_sensor : virtual public ESC::CLI
 {
     public:
-  FT6_sensor(int verbose=-1) : m_card(6), ESC::CLI(verbose, "FT6_sensor"){ m_mutex = new std::mutex();};
+    FT6_sensor(int verbose = -1)
+        : m_card(6, verbose - 1), ESC::CLI(verbose, "FT6_sensor")
+    {
+        m_mutex = new std::mutex();
+    };
     ~FT6_sensor();
 
     void start_thread();
@@ -75,19 +83,61 @@ namespace ATI
      * @param i Index of the sensor (0-5). Fx:0, Fy:1, Fz:2, Tx:3, Ty:4, Tz:5.
      * @return double The value of the sensor, in N or Nm
      */
-    double get_FT(unsigned i);
+    double get_FT(unsigned i,
+                  int *timestamp_sec = nullptr,
+                  int *timestamp_nsec = nullptr);
 
     //Tz,Ty,Tx
-    double get_torque(unsigned i) { return get_FT(i + 3); }
+    double get_torque(unsigned i,
+                      int *timestamp_sec = nullptr,
+                      int *timestamp_nsec = nullptr)
+    {
+        return get_FT(i + 3, timestamp_sec, timestamp_nsec);
+    }
     //Fz,Fy,Fx
-    double get_force(unsigned i) { return get_FT(i); }
+    double get_force(unsigned i,
+                     int *timestamp_sec = nullptr,
+                     int *timestamp_nsec = nullptr)
+    {
+        return get_FT(i, timestamp_sec, timestamp_nsec);
+    }
 
-    double get_Fx() { return get_FT(0); };
-    double get_Fy() { return get_FT(1); };
-    double get_Fz() { return get_FT(2); };
-    double get_Tx() { return get_FT(3); };
-    double get_Ty() { return get_FT(4); };
-    double get_Tz() { return get_FT(5); };
+    double get_Fx(int *timestamp_sec = nullptr, int *timestamp_nsec = nullptr)
+    {
+        return get_FT(0, timestamp_sec, timestamp_nsec);
+    };
+    double get_Fy(int *timestamp_sec = nullptr, int *timestamp_nsec = nullptr)
+    {
+        return get_FT(1, timestamp_sec, timestamp_nsec);
+    };
+    double get_Fz(int *timestamp_sec = nullptr, int *timestamp_nsec = nullptr)
+    {
+        return get_FT(2, timestamp_sec, timestamp_nsec);
+    };
+    double get_Tx(int *timestamp_sec = nullptr, int *timestamp_nsec = nullptr)
+    {
+        return get_FT(3, timestamp_sec, timestamp_nsec);
+    };
+    double get_Ty(int *timestamp_sec = nullptr, int *timestamp_nsec = nullptr)
+    {
+        return get_FT(4, timestamp_sec, timestamp_nsec);
+    };
+    double get_Tz(int *timestamp_sec = nullptr, int *timestamp_nsec = nullptr)
+    {
+        return get_FT(5, timestamp_sec, timestamp_nsec);
+    };
+
+    void set_callback(void (*callback)(int nb_channels,
+                                       int nb_samples,
+                                       double *data,
+                                       uint64_t timestamp_sec,
+                                       uint32_t timestamp_nsec,
+                                       void *obj),
+                      void *obj)
+    {
+        m_callback = callback;
+        m_callback_obj = obj;
+    }
 
     /**
      * @brief Returns true if new data are available.
@@ -102,21 +152,32 @@ namespace ATI
 
     /**
      * @brief Reads the NI::DAQcard and updates the data. Needs to be called manually if the thread is not active.
-     * 
+     *
      */
     void read_FT();
 
     private:
-
     void convert();
 
-    std::thread *m_thread=nullptr;
+    std::thread *m_thread = nullptr;
     std::mutex *m_mutex;
     bool m_active = false;
+
+    void (*m_callback)(int nb_channels,
+                       int nb_samples,
+                       double *data,
+                       uint64_t timestamp_sec,
+                       uint32_t timestamp_nsec,
+                       void *obj) = nullptr;
+    void *m_callback_obj = nullptr;
+    int m_nb_channels = 6;
+    int m_samplingSize = 1;
 
     NI::DAQcard m_card;
     double m_data[6];
     double m_data_conv[6];
+    uint64_t m_timestamp_sec = 0;
+    uint32_t m_timestamp_nsec = 0;
     bool m_new_data[6] = {false};
     float m_calcoef[6][6] = {
         {-0.00758, -0.00595, 0.17292, -3.31572, -0.10515, 3.04384},

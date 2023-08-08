@@ -4,8 +4,10 @@
 namespace NI
 {
 
-  DAQcard::DAQcard(int n, int verbose) : m_n(n), ESC::CLI(verbose, "NI_DAQ")
+DAQcard::DAQcard(int n, int verbose) : m_n(n), ESC::CLI(verbose, "NI_DAQ")
 {
+    logln("Initializing DAQ card with " + std::to_string(m_n) + " channels",
+          true);
     std::string task_name = "Task";
     std::string ch_path = "Dev1/ai";
     std::string ch_name = "Channel";
@@ -18,16 +20,27 @@ namespace NI
             (ch_name + std::to_string(i)).c_str(), DAQmx_Val_Cfg_Default, -10.0,
             10.0, DAQmx_Val_Volts, NULL);
         check_error(m_err);
+        logln(ch_name + std::to_string(i) + " created (" + ch_path +
+              std::to_string(i) + ")");
     }
     m_err = DAQmxStartTask(m_taskHandle);
     check_error(m_err);
 };
 DAQcard::~DAQcard(){};
 
-void DAQcard::read(float64 *data)
+void DAQcard::read(float64 *data, int *timestamp_sec, int *timestamp_nsec)
 {
-    m_err = DAQmxReadAnalogF64(m_taskHandle, 1, 10.0, DAQmx_Val_GroupByChannel,
-                               data, m_n, &m_nb_read, NULL);
+    m_err = DAQmxReadAnalogF64(m_taskHandle, m_samplingSize, 10.0,
+                               DAQmx_Val_GroupByChannel, data, m_n, &m_nb_read,
+                               NULL);
+    if(timestamp_sec != nullptr)
+        *timestamp_sec = time(NULL);
+    if(timestamp_nsec != nullptr)
+    {
+        struct timespec ts;
+        clock_gettime(CLOCK_REALTIME, &ts);
+        *timestamp_nsec = ts.tv_nsec;
+    }
     check_error(m_err);
 };
 
@@ -42,7 +55,9 @@ void DAQcard::check_error(int error)
             DAQmxClearTask(m_taskHandle);
         }
         if(DAQmxFailed(error))
-	  logln(ESC::fstr("Error",{ESC::FG_RED}) + ESC::fstr(m_errBuff,{ESC::BOLD}), true);
+            logln(ESC::fstr("Error", {ESC::FG_RED}) +
+                      ESC::fstr(m_errBuff, {ESC::BOLD}),
+                  true);
         logln("End of program, press Enter key to quit\n");
         exit(0);
     }
@@ -55,12 +70,13 @@ void FT6_sensor::start_thread()
 {
     m_active = true;
     m_thread = new std::thread(&FT6_sensor::loop, this);
+    logln("Thread started", true);
 };
 
 FT6_sensor::~FT6_sensor()
 {
     m_active = false;
-    if(m_thread!=nullptr)
+    if(m_thread != nullptr)
     {
         m_thread->join();
         delete m_thread;
@@ -68,13 +84,23 @@ FT6_sensor::~FT6_sensor()
     }
 };
 
-void FT6_sensor::pause_thread() { m_active = false; };
+void FT6_sensor::pause_thread()
+{
+    m_active = false;
+    logln("Thread paused", true);
+};
 
-double FT6_sensor::get_FT(unsigned i) //Tz,Ty,Tx,Fz,Fy,Fx
+double FT6_sensor::get_FT(unsigned i,
+                          int *timestamp_sec,
+                          int *timestamp_nsec) //Tz,Ty,Tx,Fz,Fy,Fx
 {
     std::lock_guard<std::mutex> lck(*m_mutex);
     i = (i < 6) ? i : 6;
     m_new_data[i] = false;
+    if(timestamp_sec != nullptr)
+        *timestamp_sec = m_timestamp_sec;
+    if(timestamp_nsec != nullptr)
+        *timestamp_nsec = m_timestamp_nsec;
     return m_data_conv[i];
 }
 
@@ -87,9 +113,15 @@ void *FT6_sensor::loop(void *obj)
 
 void FT6_sensor::read_FT()
 {
-    m_card.read(m_data);
+    int timestamp_sec, timestamp_nsec;
+    m_card.read(m_data, &timestamp_sec, &timestamp_nsec);
     std::lock_guard<std::mutex> lck(*m_mutex);
+    m_timestamp_sec = timestamp_sec;
+    m_timestamp_nsec = timestamp_nsec;
     this->convert();
+    if(m_callback != nullptr)
+        m_callback(m_nb_channels, m_samplingSize, m_data_conv, m_timestamp_sec,
+                   m_timestamp_nsec, m_callback_obj);
 };
 
 void FT6_sensor::convert()
