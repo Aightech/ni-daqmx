@@ -71,6 +71,20 @@ MATH(EXPR color_code2 "${DIR_DEPTH}+34")
 ###### include helper functions ######
 include(CMakeFunctions.txt)
 
+#test if library NIDAQmx.h is installed
+find_path(NIDAQmx_INCLUDE_DIR NIDAQmx.h)
+if(NIDAQmx_INCLUDE_DIR)
+  message("${PREFIX_MSG}-- ${ColourBold}${Esc}[${color_code}m${EXEC_NAME}${ColourReset}: NIDAQmx.h found")
+  set(NIDAQmx_FOUND TRUE)
+  set(EXTRA_LIBS "/usr/lib/x86_64-linux-gnu/libnidaqmx.so" "/usr/lib/x86_64-linux-gnu/libnipalu.so" "pthread")
+else()
+  message("${PREFIX_MSG}-- ${ColourBold}${Esc}[${color_code}m${EXEC_NAME}${ColourReset}: NIDAQmx.h not found")
+  set(NIDAQmx_FOUND FALSE)
+  #exit this CMakeLists.txt
+  return()
+endif() 
+
+
 if (TARGET ${EXEC_NAME})
   # Do something when target found
   message("${PREFIX_MSG}-- ${ColourBold}${Esc}[${color_code}m${EXEC_NAME}${ColourReset} is already built")
