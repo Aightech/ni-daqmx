@@ -1,7 +1,7 @@
 #include "ni-daqmx.hpp"
 #include <lsl_cpp.h>
 
-void cb(int nb_channels, int samplingSize, double* data, uint64_t timestamp_sec, uint32_t timestamp_nsec, void* obj)
+void cb(int nb_channels, int samplingSize, double* data, uint64_t timestamp_sec, uint64_t timestamp_nsec, void* obj)
 {
 	lsl::stream_outlet* outlet = reinterpret_cast<lsl::stream_outlet*>(obj);
 	outlet->push_sample(data, timestamp_sec+ timestamp_nsec*1e-9);
