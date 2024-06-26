@@ -1,4 +1,4 @@
-#include "ni_daqmx.hpp"
+#include "ni-daqmx.hpp"
 #include <unistd.h> // for usleep()
 
 namespace NI
