@@ -1,8 +1,8 @@
 set(EXEC_NAME ni-daqmx)
-set(PROJECT_VERSION 5.3)
+set(PROJECT_VERSION 6.1)
 
 ###### Special libraries ######
-set(EXTRA_LIBS "")
+set(EXTRA_LIBS "nidaqmx")
 set(TOOL_LIBS "")		
 if(1)
   
